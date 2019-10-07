@@ -17,7 +17,7 @@ for (x,y,w,h) in faces:
 
     cont=1 ##contador
     for (ex,ey,ew,eh) in eyes:
-        if cont==1
+        if cont==1:
             ext=ex
             eyt=ey
             ewt=ew
