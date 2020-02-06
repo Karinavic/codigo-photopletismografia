@@ -18,3 +18,15 @@ def ler_video(caminho=None):
             gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY) #converte o quadro para tons de cinza 
     except cv2.error:
         sys.exit()
+
+def detecta_face(gray):
+    faces = faceCascade1.detectMultiScale(
+        gray,
+        minNeighbors=20,
+        minSize=(30, 30),
+	maxSize=(300,300)
+    )
+    for (x, y, w, h) in faces:
+        roi_gray = gray[y:y+h, x:x+w]
+        roi_color = frame[y:y+h, x:x+w]
+        
