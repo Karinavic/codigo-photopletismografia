@@ -74,6 +74,22 @@ def detecta_olho(roi_gray, roi_color):
         pass
     cv.rectangle(roi_color,(ex+int(0.5*ew),ey-eh),(pw-int(0.5*ew),ph-int(eh*1.4)), (255,0,255),2)# retangulo da testa
 
+def gravar_video(nome):
+    cap = cv.VideoCapture(0)
+    # Define the codec and create VideoWriter object
+    fourcc = cv.cv.CV_FOURCC(*'XVID')
+    arquivo = "testevideo_" + nome + ".avi"
+    out = cv.VideoWriter(arquivo, fourcc, 20.0, (640,  480))
+    for t in range(400):
+        ret, frame = cap.read()
+        if not ret:
+            print("Can't receive frame (stream end?). Exiting ...")
+            break
+        out.write(frame)
+        cv.imshow('frame', frame)
+        if cv.waitKey(1) == ord('q'):
+            break
+
 caminho = sys.argv[1] #ler o caminho como argumento do arquivo
 ler_video(caminho)#chama a funcao ler video
 webcam.release() #dispensa o uso da webcam
