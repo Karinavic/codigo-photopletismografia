@@ -1,6 +1,6 @@
 import numpy as np
 import cv2 as cv
-import sys
+import sys, argparse
 
 def ler_video(caminho=None):
     if caminho is None:
@@ -9,7 +9,7 @@ def ler_video(caminho=None):
         cap = cv.VideoCapture(caminho) #ler a partir do caminho(video local)
     try:
         while True:
-            ret, frame = cap.read() #ler o quadro da imagem do vídeo
+            frame = cap.read()[1] #ler o quadro da imagem do vídeo
             gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY) #converte o quadro para tons de cinza 
             detecta_face(frame, gray)
             cv.imshow('Video', frame) #mostra a imagem capturada na janela
@@ -17,6 +17,8 @@ def ler_video(caminho=None):
             #o trecho seguinte e apenas para parar o codigo e fechar a janela
             if cv.waitKey(1) & 0xFF == ord('q'):
                 break
+        cap.release()
+        cv.destroyAllWindows()
     except cv.error:
         sys.exit()
 
@@ -77,10 +79,10 @@ def detecta_olho(roi_gray, roi_color):
 def gravar_video(nome):
     cap = cv.VideoCapture(0)
     # Define the codec and create VideoWriter object
-    fourcc = cv.cv.CV_FOURCC(*'XVID')
+    fourcc = cv.VideoWriter_fourcc(*'XVID')
     arquivo = "testevideo_" + nome + ".avi"
     out = cv.VideoWriter(arquivo, fourcc, 20.0, (640,  480))
-    for t in range(400):
+    for __ in range(400):
         ret, frame = cap.read()
         if not ret:
             print("Can't receive frame (stream end?). Exiting ...")
@@ -89,8 +91,14 @@ def gravar_video(nome):
         cv.imshow('frame', frame)
         if cv.waitKey(1) == ord('q'):
             break
+    cap.release
+    out.release
+    cv.destroyAllWindows
 
-caminho = sys.argv[1] #ler o caminho como argumento do arquivo
-ler_video(caminho)#chama a funcao ler video
-webcam.release() #dispensa o uso da webcam
-cv.destroyAllWindows() #fecha todas a janelas abertas
+parser = argparse.ArgumentParser()
+parser.add_argument("-c", "--captura", help="captura o video da webcam", action="store_true")
+args = parser.parse_args()
+if args.captura:
+    gravar_video(input("Digite o nome para o video: "))
+else:
+    ler_video(input("Digite o caminho do video: "))#chama a funcao ler video
