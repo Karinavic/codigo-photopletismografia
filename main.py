@@ -72,6 +72,7 @@ def detecta_olho(roi_gray, roi_color):
             cv.rectangle(roi_color,(ex,ey),(pw,ph), (255,0,0),2)# retangulo dos olhos
     except:
         pass
+    cv.rectangle(roi_color,(ex+int(0.5*ew),ey-eh),(pw-int(0.5*ew),ph-int(eh*1.4)), (255,0,255),2)# retangulo da testa
 
 caminho = sys.argv[1] #ler o caminho como argumento do arquivo
 ler_video(caminho)#chama a funcao ler video
