@@ -1,6 +1,7 @@
 import numpy as np
 import cv2 as cv
 import sys, argparse
+import easygui
 
 def ler_video(caminho=None):
     if caminho is None:
@@ -99,6 +100,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--captura", help="captura o video da webcam", action="store_true")
 args = parser.parse_args()
 if args.captura:
-    gravar_video(input("Digite o nome para o video: "))
+    gravar_video(inqput("Digite o nome para o video: "))
 else:
-    ler_video(input("Digite o caminho do video: "))#chama a funcao ler video
+    ler_video(easygui.fileopenbox())#chama a funcao ler video
