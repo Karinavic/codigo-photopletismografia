@@ -9,10 +9,12 @@ def ler_video(caminho=None):#variavel vazia
     else:
         cap = cv.VideoCapture(caminho) #ler a partir do caminho(video local)
     try:
+        raw_ppg = np.empty([0])
         while True:
             frame = cap.read()[1] #ler o quadro da imagem do vídeo
             gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY) #converte o quadro para tons de cinza 
-            detecta_face(frame, gray)
+            media_matiz = detecta_face(frame, gray)
+            raw_ppg = np.append(raw_ppg,media_matiz)
             cv.imshow('Video', frame) #mostra a imagem capturada na janela
 
             #o trecho seguinte e apenas para parar o codigo e fechar a janela
@@ -20,7 +22,9 @@ def ler_video(caminho=None):#variavel vazia
                 break
         cap.release()
         cv.destroyAllWindows()
+        print(raw_ppg)
     except cv.error:
+        print(raw_ppg)
         sys.exit()
 
 def detecta_face(frame, gray):
@@ -36,7 +40,7 @@ def detecta_face(frame, gray):
         roi_gray = gray[y:y+h, x:x+w]
         roi_color = frame[y:y+h, x:x+w]
         cv.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 4)#retangulo da face
-        detecta_olho(roi_gray, roi_color, w)
+        return detecta_olho(roi_gray, roi_color, w)
 
 def detecta_olho(roi_gray, roi_color, w):
     global ex, ey, pw, ph,ew,eh
@@ -82,6 +86,7 @@ def detecta_olho(roi_gray, roi_color, w):
         cv.rectangle(roi_color,(ex,ey),(pw,ph), (255,0,0),2)# retangulo dos olhos
         cv.rectangle(roi_color,(ex+int(0.5*ew),ey-eh),(pw-int(0.5*ew),ph-int(eh*1.4)), (255,0,255),2)# retangulo da testa
         roi_testa = roi_color[ey-eh:ph-int(eh*1.4), ex+int(0.5*ew):pw-int(0.5*ew)]
+        return calcular_media_matriz(roi_testa)
     except:
         pass
     
@@ -98,13 +103,11 @@ def gravar_video(nome):
             break
         out.write(frame)
         cv.imshow('frame', frame)
-        if cv.waitKey(1) == ord('q'):
-            break
     cap.release
     out.release
     cv.destroyAllWindows
 
-def processamento(roi_testa): 
+def calcular_media_matriz(roi_testa): 
     hsv = cv.cvtColor(roi_testa, cv.COLOR_BGR2HSV) # Converte BGR em HSV
     vetor_matiz = np.empty([0])
     for linha in range(0, hsv.shape[0]):#percorre linha do frame
