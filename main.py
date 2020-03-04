@@ -84,7 +84,7 @@ def detecta_olho(roi_gray, roi_color, w):
         roi_testa = roi_color[ey-eh:ph-int(eh*1.4), ex+int(0.5*ew):pw-int(0.5*ew)]
     except:
         pass
-
+    
 def gravar_video(nome):
     cap = cv.VideoCapture(0)
     # Define the codec and create VideoWriter object
@@ -104,15 +104,20 @@ def gravar_video(nome):
     out.release
     cv.destroyAllWindows
 
-parser = argparse.ArgumentParser()
+def processamento(roi_testa): 
+    hsv = cv.cvtColor(roi_testa, cv.COLOR_BGR2HSV) # Converte BGR em HSV
+    vetor_matiz = np.empty([0])
+    for linha in range(0, hsv.shape[0]):#percorre linha do frame
+        for coluna in range(0, hsv.shape[1]):#percorre linha do frame
+            if hsv[linha,coluna,0] < 18: # definicao do limite da matiz=18
+                vetor_matiz = np.append(vetor_matiz,hsv[linha,coluna,0])
+    media_matiz = np.mean(vetor_matiz)
+    return media_matiz
+
+parser = argparse.ArgumentParser() #
 parser.add_argument("-c", "--captura", help="captura o video da webcam", action="store_true")
 args = parser.parse_args()
 if args.captura:
     gravar_video(input("Digite o nome para o video: "))
 else:
-    ler_video(easygui.fileopenbox())#chama a funcao ler video na pasta do arquivo
-    
-
-'''def RGB_para_HSV(frame): 
-
-    hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV) # Convert BGR em HSV'''
+    ler_video(easygui.fileopenbox())#chama a funcao ler video na pasta do arquivo 
