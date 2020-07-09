@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import numpy as np
 import cv2 as cv
 import sys, argparse
@@ -117,10 +119,11 @@ def calcular_media_matriz(roi_testa):
     media_matiz = np.mean(vetor_matiz)
     return media_matiz
 
-parser = argparse.ArgumentParser() #
-parser.add_argument("-c", "--captura", help="captura o video da webcam", action="store_true")
-args = parser.parse_args()
-if args.captura:
-    gravar_video(input("Digite o nome para o video: "))
-else:
-    ler_video(easygui.fileopenbox())#chama a funcao ler video na pasta do arquivo 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser() #
+    parser.add_argument("-c", "--captura", help="captura o video da webcam", action="store_true")
+    args = parser.parse_args()
+    if args.captura:
+        gravar_video(input("Digite o nome para o video: "))
+    else:
+        ler_video(easygui.fileopenbox())#chama a funcao ler video na pasta do arquivo 
