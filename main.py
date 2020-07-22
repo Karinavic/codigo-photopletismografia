@@ -99,7 +99,7 @@ def detecta_olho(roi_gray, roi_color, w):
             (pw - int(0.5*ew), ph - int(eh*1.4)), (255, 0, 255), 2)  # retangulo da testa
         roi_testa = roi_color[ey-eh : ph-int(eh*1.4),
                     ex+int(0.5*ew) : pw-int(0.5*ew)]
-        return calcular_media_matriz(roi_testa)
+        return calcular_media_matiz(roi_testa)
     except:
         pass
 
@@ -117,13 +117,13 @@ def gravar_video(nome):
             print("Can't receive frame (stream end?). Exiting ...")
             break
         out.write(frame)
-        cv.imshow('frame', frame)
-    cap.release
-    out.release
+        cv.imshow('frame', frame)()
+    cap.release()
+    out.release()
     cv.destroyAllWindows
 
 
-def calcular_media_matriz(roi_testa):
+def calcular_media_matiz(roi_testa):
     """Calcula a média de matiz da região da testa."""
     hsv = cv.cvtColor(roi_testa, cv.COLOR_BGR2HSV)  # Converte BGR em HSV
     vetor_matiz = np.empty([0])
@@ -132,7 +132,7 @@ def calcular_media_matriz(roi_testa):
             if hsv[linha, coluna, 0] < 18:  # definicao do limite da matiz=18
                 vetor_matiz = np.append(vetor_matiz, hsv[linha, coluna, 0])
     media_matiz = np.mean(vetor_matiz)
-    return media_matiz
+    return media_matiz 
 
 
 if __name__ == "__main__":
