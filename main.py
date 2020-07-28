@@ -9,7 +9,6 @@ computacional e processamento digital de imagens e vídeos.
 
 """
 
-import sys
 import argparse
 import numpy as np
 import cv2 as cv
@@ -22,29 +21,32 @@ def main(caminho=None):  # variavel vazia
         cap = cv.VideoCapture(0)  # ler a partir da webcam
     else:
         cap = cv.VideoCapture(caminho)  # ler a partir do caminho
-    try:
-        raw_ppg = np.empty([0])
-        while True:
-            frame = cap.read()[1]  # ler o quadro da imagem do vídeo
-            gray = cv.cvtColor(frame,  # converte o quadro para tons de cinza
-                               cv.COLOR_BGR2GRAY)
-            media_matiz = detecta_face(frame, gray)
+    raw_ppg = np.empty([0])
+    while True:
+        frame = cap.read()[1]  # ler o quadro da imagem do vídeo
+        if frame is None:  # fim do vídeo
+            break
+        roi_gray, roi_color, width = detecta_face(frame)
+        if roi_gray is not []:  # se a face foi detectada
+            roi_testa = detecta_olho(roi_gray, roi_color, width)
+        else:
+            roi_testa = None
+        if roi_testa is not None:  # se encontrou a região da testa
+            media_matiz = calcular_media_matiz(roi_testa)
             raw_ppg = np.append(raw_ppg, media_matiz)
-            cv.imshow('Video', frame)  # mostra a imagem capturada na janela
+        cv.imshow('Video', frame)  # mostra a imagem capturada na janela
 
-            # o trecho seguinte e apenas para parar o codigo e fechar a janela
-            if cv.waitKey(1) & 0xFF == ord('q'):
-                break
-        cap.release()
-        cv.destroyAllWindows()
-        print(raw_ppg)
-    except cv.error:
-        print(raw_ppg)
-        sys.exit()
+        # o trecho seguinte e apenas para parar o codigo e fechar a janela
+        if cv.waitKey(1) & 0xFF == ord('q'):
+            break
+    cap.release()
+    cv.destroyAllWindows()
+    print("Done!")
 
 
-def detecta_face(frame, gray):
+def detecta_face(frame):
     """Detecta a face no quadro."""
+    gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
     face_cascade_name = 'haarcascade_frontalface_default.xml'
     face_cascade = cv.CascadeClassifier(face_cascade_name)  # classificador para face
     faces = face_cascade.detectMultiScale(gray, minNeighbors=20,
@@ -55,7 +57,10 @@ def detecta_face(frame, gray):
         roi_color = frame[y_coord : y_coord+height, x_coord : x_coord+width]
         cv.rectangle(frame, (x_coord, y_coord),  # retangulo da face
                      (x_coord + width, y_coord + height), (0, 255, 0), 4)
-        return detecta_olho(roi_gray, roi_color, width)
+    if len(faces) == 0:
+        return [], [], []
+    else:
+        return roi_gray, roi_color, width
 
 
 def detecta_olho(roi_gray, roi_color, width):
@@ -64,56 +69,57 @@ def detecta_olho(roi_gray, roi_color, width):
     eye_cascade = cv.CascadeClassifier(eye_cascade_name)  # classificador para os olhos
     olhos = eye_cascade.detectMultiScale(roi_gray, minNeighbors=20,
                                          minSize=(10, 10), maxSize=(90, 90))
-    cont = 0
-    eye_x = None
-    eye_y = None
-    eye_wd = None
-    eye_hg = None
-    eyes_wd = None
-    eyes_hg = None
+    contador = 0  # conta a quantidade de olhos encontrados na face
+    eye_x = None  # coordenada x de um dos olhos
+    eye_y = None  # coordenada y de um dos olhos
+    eye_wd = None  # largura de um dos olhos
+    eye_hg = None  # altura de um dos olhos
+    eyes_wd = None  # largura de ambos os olhos
+    eyes_hg = None  # altura de ambos os olhos
 
     for (eye_x, eye_y, eye_wd, eye_hg) in olhos:
-        if cont == 0:
-            eye_xt = eye_x
-            eyt = eye_y
-            ewt = eye_wd
-            eht = eye_hg
-            pht = eyt + eht  # ponto inferior do olho + altura
-        cont += 1
+        if contador == 0:  # armazena os dados de um olho antes do próximo
+            eye_x_temp = eye_x
+            eye_y_temp = eye_y
+            eye_width_temp = eye_wd
+            eye_height_temp = eye_hg
+            eye_height_bottom = eye_y_temp + eye_height_temp
+        contador += 1
 
-    if cont == 2:  # quando os dois olhos são encontrados no quadro
-        eyes_hg = eye_y + eye_hg
-        if eye_xt < eye_x:
-            eyes_wd = eye_x + eye_wd  # ponto superior do olho + largura
-            eye_x = eye_xt
+    if contador == 2:  # quando os dois olhos são encontrados no quadro
+        if eye_x_temp < eye_x:
+            eyes_wd = eye_x + eye_wd - eye_x_temp
+            eye_x = eye_x_temp
         else:
-            eyes_wd = eye_xt + ewt
-            eye_wd = ewt
-        if pht > eyes_hg:
-            eyes_hg = pht
-        if eyt < eye_y:
-            eye_y = eyt
-
-    elif cont == 1:  # quando só um olho é encontrado no quadro
-        eyes_hg = eye_y + eye_hg
+            eyes_wd = eye_x_temp + eye_width_temp - eye_x
+        if eye_height_bottom < eye_y + eye_hg:
+            eye_height_bottom = eye_y + eye_hg
+        if eye_y_temp < eye_y:
+            eyes_hg = eye_height_bottom - eye_y_temp
+            eye_y = eye_y_temp
+        else:
+            eyes_hg = eye_height_bottom - eye_y
+    elif contador == 1:  # quando só um olho é encontrado no quadro
+        eyes_hg = eye_hg
         ponto_medio = width / 2  # ponto medio da largura da face
-        if eye_x < ponto_medio:  # caso encontre so o olho esquerdo
-            eyes_wd = width - eye_x  # coordenada
-        else:
-            eyes_wd = eye_x + eye_wd
+        if eye_x > ponto_medio:  # caso encontre só o olho direito do quadro
             eye_x = width - (eye_x + eye_wd)
+        eyes_wd = width - 2*eye_x
 
-    try:  # lidando com possiveis erros-nao encontrando nenhum olho
-        cv.rectangle(roi_color, (eye_x, eye_y), (eyes_wd, eyes_hg),
-                     (255, 0, 0), 2)  # retangulo dos olhos
-        cv.rectangle(roi_color, (eye_x + int(0.5*eye_wd), eye_y - eye_hg),
-                     (eyes_wd - int(0.5*eye_wd), eyes_hg - int(eye_hg*1.4)),
-                     (255, 0, 255), 2)
-        roi_testa = roi_color[eye_y-eye_hg : eyes_hg-int(eye_hg*1.4),
-                              eye_x+int(0.5*eye_wd) : eyes_wd-int(0.5*eye_wd)]
-        return calcular_media_matiz(roi_testa)
-    except:
-        pass
+    if contador == 0:
+        roi_testa = None
+    else:
+        testa_x = eye_x + int(0.5*eye_wd)
+        testa_y = 0
+        testa_w = eyes_wd - eye_wd
+        testa_h = int(0.7*eyes_hg)
+        cv.rectangle(roi_color, (eye_x, eye_y),  # retangulo dos olhos
+                     (eye_x + eyes_wd, eye_y + eyes_hg), (255, 0, 0), 2)
+        cv.rectangle(roi_color, (testa_x, testa_y),  # retângulo da testa
+                     (testa_x + testa_w, testa_y + testa_h), (255, 0, 255), 2)
+        roi_testa = roi_color[testa_y : testa_y+testa_h,
+                              testa_x : testa_x+testa_w]
+    return roi_testa
 
 
 def gravar_video(nome):
@@ -140,7 +146,7 @@ def calcular_media_matiz(roi_testa):
     hsv = cv.cvtColor(roi_testa, cv.COLOR_BGR2HSV)  # Converte BGR em HSV
     vetor_matiz = np.empty([0])
     for linha in range(0, hsv.shape[0]):  # percorre linha do frame
-        for coluna in range(0, hsv.shape[1]):  # percorre linha do frame
+        for coluna in range(0, hsv.shape[1]):  # percorre coluna do frame
             if hsv[linha, coluna, 0] < 18:  # definicao do limite da matiz=18
                 vetor_matiz = np.append(vetor_matiz, hsv[linha, coluna, 0])
     media_matiz = np.mean(vetor_matiz)
