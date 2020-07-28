@@ -33,14 +33,14 @@ def main(caminho=None):  # variavel vazia
     except NameError:
         print("Erro na leitura, você checou se é um arquivo de vídeo?")
         sys.exit()
-    raw_ppg = np.empty([0])
+    raw_ppg = np.empty([0])  # armazena os dados brutos de pletismografia
     while True:
         frame = cap.read()[1]  # ler o quadro da imagem do vídeo
         if frame is None:  # fim do vídeo
             break
-        roi_gray, roi_color, width = detecta_face(frame)
-        if roi_gray is not []:  # se a face foi detectada
-            roi_testa = detecta_olho(roi_gray, roi_color, width)
+        roi_gray, roi_color = detecta_face(frame)
+        if roi_gray is not None:  # se a face foi detectada
+            roi_testa = detecta_olho(roi_gray, roi_color)
         else:
             roi_testa = None
         if roi_testa is not None:  # se encontrou a região da testa
@@ -70,12 +70,12 @@ def detecta_face(frame):
         cv.rectangle(frame, (x_coord, y_coord),  # retangulo da face
                      (x_coord + width, y_coord + height), (0, 255, 0), 4)
     if len(faces) == 0:
-        return [], [], []
+        return None, None
     else:
-        return roi_gray, roi_color, width
+        return roi_gray, roi_color
 
 
-def detecta_olho(roi_gray, roi_color, width):
+def detecta_olho(roi_gray, roi_color):
     """Detecta o olho no quadro."""
     eye_cascade_name = 'haarcascade_eye.xml'
     eye_cascade = cv.CascadeClassifier(eye_cascade_name)  # classificador para os olhos
@@ -112,13 +112,14 @@ def detecta_olho(roi_gray, roi_color, width):
         else:
             eyes_hg = eye_height_bottom - eye_y
     elif contador == 1:  # quando só um olho é encontrado no quadro
+        width = roi_gray.shape[1]  # largura do quadro
         eyes_hg = eye_hg
         ponto_medio = width / 2  # ponto medio da largura da face
         if eye_x > ponto_medio:  # caso encontre só o olho direito do quadro
             eye_x = width - (eye_x + eye_wd)
         eyes_wd = width - 2*eye_x
 
-    if contador == 0:
+    if contador == 0:  # nenhum olho encontrado no quadro
         roi_testa = None
     else:
         testa_x = eye_x + int(0.5*eye_wd)
@@ -147,7 +148,7 @@ def gravar_video(nome):
             print("Can't receive frame (stream end?). Exiting ...")
             break
         out.write(frame)
-        cv.imshow('frame', frame)()
+        cv.imshow('frame', frame)
     cap.release()
     out.release()
     cv.destroyAllWindows()
@@ -159,7 +160,7 @@ def calcular_media_matiz(roi_testa):
     vetor_matiz = np.empty([0])
     for linha in range(0, hsv.shape[0]):  # percorre linha do frame
         for coluna in range(0, hsv.shape[1]):  # percorre coluna do frame
-            if hsv[linha, coluna, 0] < 18:  # definicao do limite da matiz=18
+            if hsv[linha, coluna, 0] < 18:  # def. do limite da matiz = 18
                 vetor_matiz = np.append(vetor_matiz, hsv[linha, coluna, 0])
     media_matiz = np.mean(vetor_matiz)
     return media_matiz
