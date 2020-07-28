@@ -9,6 +9,7 @@ computacional e processamento digital de imagens e vídeos.
 
 """
 
+import sys
 import argparse
 import numpy as np
 import cv2 as cv
@@ -17,10 +18,21 @@ import easygui
 
 def main(caminho=None):  # variavel vazia
     """Lê o vídeo a partir do arquivo ou da webcam."""
-    if caminho is None:
-        cap = cv.VideoCapture(0)  # ler a partir da webcam
-    else:
-        cap = cv.VideoCapture(caminho)  # ler a partir do caminho
+    try:
+        if caminho is None:
+            cap = cv.VideoCapture(0)  # ler a partir da webcam
+            if not cap.isOpened():
+                raise IOError
+        else:
+            cap = cv.VideoCapture(caminho)  # ler a partir do caminho
+            if not cap.isOpened():
+                raise NameError
+    except IOError:
+        print("Impossível abrir a webcam, verifique a conexão.")
+        sys.exit()
+    except NameError:
+        print("Erro na leitura, você checou se é um arquivo de vídeo?")
+        sys.exit()
     raw_ppg = np.empty([0])
     while True:
         frame = cap.read()[1]  # ler o quadro da imagem do vídeo
