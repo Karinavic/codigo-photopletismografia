@@ -49,6 +49,7 @@ coverage.xml
 .pytest_cache/
 *.avi
 *.xml
+figuras/
 
 # Translations
 *.mo
