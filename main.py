@@ -14,6 +14,7 @@ import argparse
 import numpy as np
 import cv2 as cv
 import easygui
+import matplotlib.pyplot as plt
 
 
 def main(caminho=None):  # variavel vazia
@@ -47,12 +48,12 @@ def main(caminho=None):  # variavel vazia
             media_matiz = calcular_media_matiz(roi_testa)
             raw_ppg = np.append(raw_ppg, media_matiz)
         cv.imshow('Video', frame)  # mostra a imagem capturada na janela
-
         # o trecho seguinte e apenas para parar o codigo e fechar a janela
         if cv.waitKey(1) & 0xFF == ord('q'):
             break
     cap.release()
     cv.destroyAllWindows()
+    frequencia, amplitude = calculo_fft(raw_ppg)
     print("Done!")
 
 
@@ -164,6 +165,40 @@ def calcular_media_matiz(roi_testa):
                 vetor_matiz = np.append(vetor_matiz, hsv[linha, coluna, 0])
     media_matiz = np.mean(vetor_matiz)
     return media_matiz
+
+
+def calcular_fft(raw_ppg):
+    #calcula fft do raw_ppg 
+    T = 1/20 #periodo
+    N = raw_ppg.size
+    t = np.linspace(0, 1/T, N) #base de tempo, (valor inicial, final, numero de pontos)
+    #print(raw_ppg)
+
+    #plt.figure()
+    plt.ylabel("Amplitude")
+    plt.xlabel("Time [s]")
+    plt.title("sinal bruto de amplitude no tempo")
+    plt.plot(t, raw_ppg)
+    plt.savefig('fft_ts.png')
+    plt.show()
+
+    fft = np.fft.fft(raw_ppg)    
+    #freq = np.linspace(0, 1 / T, N)
+    # fornece os componentes de frequência correspondentes aos dados
+    freq = np.fft.fftfreq(len(raw_ppg), T)
+    frequencia = freq[:N // 2]
+    amplitude = np.abs(fft)[:N // 2] * 1 / N #normalizar
+
+    plt.figure()
+    plt.title("sinal bruto amplitude em frequência")
+    plt.ylabel("Amplitude")
+    plt.xlabel("Frequência (Hz)")
+    #plt.plot(freq, fft)
+    plt.plot(frequencia, amplitude)
+    plt.savefig('fft_freq.png')
+    plt.show()
+
+    return frequencia, amplitude
 
 
 if __name__ == "__main__":
