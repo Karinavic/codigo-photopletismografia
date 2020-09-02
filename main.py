@@ -14,6 +14,7 @@ import argparse
 import numpy as np
 import cv2 as cv
 import easygui
+from scipy.signal import butter, filtfilt
 import matplotlib.pyplot as plt
 
 
@@ -53,7 +54,7 @@ def main(caminho=None):  # variavel vazia
             break
     cap.release()
     cv.destroyAllWindows()
-    frequencia, amplitude = calculo_fft(raw_ppg)
+    calcular_fc(raw_ppg)
     print("Done!")
 
 
@@ -167,38 +168,50 @@ def calcular_media_matiz(roi_testa):
     return media_matiz
 
 
-def calcular_fft(raw_ppg):
-    #calcula fft do raw_ppg 
-    T = 1/20 #periodo
-    N = raw_ppg.size
-    t = np.linspace(0, 1/T, N) #base de tempo, (valor inicial, final, numero de pontos)
-    #print(raw_ppg)
+def calcular_fc(raw_ppg):
+    '''calcular frequencia cardiaca- IIR BAND PASS BUTHERWORTH'''
+    T = 1/20 # periodo
+    fs = 1/T #frequencia de amostragem
+    nyq = 0.5 * fs
+    freq_a = 0.8 / nyq # corte de limite inferior para filtro passa-alto
+    freq_b = 2.2 / nyq # corte de limite superior para filtro passa-baixo
 
-    #plt.figure()
+    b, a = butter(2, (freq_a, freq_b), btype='bandpass') #filtro de ordem 2
+    ppg_filtrado = filtfilt(b, a, raw_ppg)
+    #np.abs(ppg_filtrado).max()
+
+    #calcular o fft do sinal filtrado
+    # calcular fft do ppg_filtrado 
+    
+    N = ppg_filtrado.size
+    t = np.linspace(0, 1/fs, N) # base de tempo, (valor inicial, final, numero de pontos)
+
+    fft = np.fft.fft(ppg_filtrado)    
+    # freq = np.linspace(0, 1 / fs, N)
+    # fornece os componentes de frequência correspondentes aos dados
+    freq = np.fft.fftfreq(len(ppg_filtrado), fs)
+    frequencia = freq[:N // 2]
+    amplitude = np.abs(fft)[:N // 2] * 1 / N # normalizar
+
+    indice_max = np.argmax(amplitude)
+    freq_max = frequencia[indice_max]
+
+    plt.figure()
     plt.ylabel("Amplitude")
     plt.xlabel("Time [s]")
-    plt.title("sinal bruto de amplitude no tempo")
-    plt.plot(t, raw_ppg)
-    plt.savefig('fft_ts.png')
+    plt.title("sinal filtrado de amplitude no tempo")
+    plt.plot(t, ppg_filtrado)
+    plt.savefig('butter_fft_ts.png')
     plt.show()
-
-    fft = np.fft.fft(raw_ppg)    
-    #freq = np.linspace(0, 1 / T, N)
-    # fornece os componentes de frequência correspondentes aos dados
-    freq = np.fft.fftfreq(len(raw_ppg), T)
-    frequencia = freq[:N // 2]
-    amplitude = np.abs(fft)[:N // 2] * 1 / N #normalizar
 
     plt.figure()
     plt.title("sinal bruto amplitude em frequência")
     plt.ylabel("Amplitude")
     plt.xlabel("Frequência (Hz)")
-    #plt.plot(freq, fft)
     plt.plot(frequencia, amplitude)
-    plt.savefig('fft_freq.png')
+    print(f"indice: {indice_max}, frequencia: {freq_max}")
+    plt.savefig('butter_fft_freq.png')
     plt.show()
-
-    return frequencia, amplitude
 
 
 if __name__ == "__main__":
