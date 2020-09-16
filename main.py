@@ -48,7 +48,7 @@ def main(caminho=None):  # variavel vazia
         if roi_testa is not None:  # se encontrou a região da testa
             media_matiz = calcular_media_matiz(roi_testa)
             raw_ppg = np.append(raw_ppg, media_matiz)
-        cv.imshow('Video', frame)  # mostra a imagem capturada na janela
+        cv.imshow('Video', frame)  # mostra a imagem capturada na janela 
         # o trecho seguinte e apenas para parar o codigo e fechar a janela
         if cv.waitKey(1) & 0xFF == ord('q'):
             break
@@ -143,9 +143,11 @@ def gravar_video(nome):
     # Define the codec and create VideoWriter object
     fourcc = cv.VideoWriter_fourcc(*'XVID')
     arquivo = "testevideo_" + nome + ".avi"
-    out = cv.VideoWriter(arquivo, fourcc, 20.0, (640, 480))
+    out = cv.VideoWriter(arquivo, fourcc, 30.0, (640, 480)) #30fps
     for __ in range(400):
         ret, frame = cap.read()
+        #desenha retangulo da moldura
+        #contador 
         if not ret:
             print("Can't receive frame (stream end?). Exiting ...")
             break
@@ -169,48 +171,45 @@ def calcular_media_matiz(roi_testa):
 
 
 def calcular_fc(raw_ppg):
-    '''calcular frequencia cardiaca- IIR BAND PASS BUTHERWORTH'''
+    # calcula frequencia cardiaca- IIR BAND PASS BUTHERWORTH
     T = 1/20 # periodo
-    fs = 1/T #frequencia de amostragem
-    nyq = 0.5 * fs
+    fs = 1/T # frequencia de amostragem
+    nyq = 0.5 * fs # Nysquist
     freq_a = 0.8 / nyq # corte de limite inferior para filtro passa-alto
     freq_b = 2.2 / nyq # corte de limite superior para filtro passa-baixo
 
-    b, a = butter(2, (freq_a, freq_b), btype='bandpass') #filtro de ordem 2
+    b, a = butter(2, (freq_a, freq_b), btype='bandpass') # filtro de ordem 2
     ppg_filtrado = filtfilt(b, a, raw_ppg)
-    #np.abs(ppg_filtrado).max()
 
-    #calcular o fft do sinal filtrado
-    # calcular fft do ppg_filtrado 
-    
+    #calculo fft do sinal filtrado
     N = ppg_filtrado.size
-    t = np.linspace(0, 1/fs, N) # base de tempo, (valor inicial, final, numero de pontos)
+    t = np.linspace(0, N * T, N) # (base de tempo, valor inicial- final, numero de pontos)
 
-    fft = np.fft.fft(ppg_filtrado)    
-    # freq = np.linspace(0, 1 / fs, N)
+    fft = np.fft.fft(ppg_filtrado) 
+
     # fornece os componentes de frequência correspondentes aos dados
-    freq = np.fft.fftfreq(len(ppg_filtrado), fs)
+    freq = np.fft.fftfreq(len(ppg_filtrado), T)
     frequencia = freq[:N // 2]
-    amplitude = np.abs(fft)[:N // 2] * 1 / N # normalizar
+    amplitude = np.abs(fft)[:N // 2] * 1 / N # normalizando
 
     indice_max = np.argmax(amplitude)
     freq_max = frequencia[indice_max]
 
     plt.figure()
+    plt.title("sinal filtrado de amplitude no tempo")
     plt.ylabel("Amplitude")
     plt.xlabel("Time [s]")
-    plt.title("sinal filtrado de amplitude no tempo")
     plt.plot(t, ppg_filtrado)
-    plt.savefig('butter_fft_ts.png')
+    plt.savefig('ppg_filtrado_Tempo.png')
     plt.show()
 
     plt.figure()
-    plt.title("sinal bruto amplitude em frequência")
+    plt.title("sinal fft de amplitude em frequência")
     plt.ylabel("Amplitude")
     plt.xlabel("Frequência (Hz)")
     plt.plot(frequencia, amplitude)
-    print(f"indice: {indice_max}, frequencia: {freq_max}")
-    plt.savefig('butter_fft_freq.png')
+    print(f" frequencia cardiaca : {freq_max*60}")
+    plt.savefig('ppg_filtrado_fft.png')
     plt.show()
 
 
