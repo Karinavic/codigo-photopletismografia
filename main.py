@@ -49,6 +49,7 @@ def main(caminho=None):  # variavel vazia
             media_matiz = calcular_media_matiz(roi_testa)
             raw_ppg = np.append(raw_ppg, media_matiz)
         cv.imshow('Video', frame)  # mostra a imagem capturada na janela 
+
         # o trecho seguinte e apenas para parar o codigo e fechar a janela
         if cv.waitKey(1) & 0xFF == ord('q'):
             break
@@ -144,15 +145,31 @@ def gravar_video(nome):
     fourcc = cv.VideoWriter_fourcc(*'XVID')
     arquivo = "testevideo_" + nome + ".avi"
     out = cv.VideoWriter(arquivo, fourcc, 30.0, (640, 480)) #30fps
-    for __ in range(400):
+    contador = 0  # contador do numero de quadros
+    for __ in range(900+150): #900 (duracao do video)+150 (5 segundos)
         ret, frame = cap.read()
-        #desenha retangulo da moldura
-        #contador 
         if not ret:
             print("Can't receive frame (stream end?). Exiting ...")
             break
-        out.write(frame)
+        if contador > 150:
+            out.write(frame)
+        # moldura e barras de progresso
+        cv.rectangle(frame, (200, 120), (440, 400), (0, 0, 0), 2)
+
+        if contador < 180+150:  # primeira barra
+            cv.rectangle(frame, (70-10, 440), (70+10, 480), (0, 255, 0), -1)
+        if contador < (180*2) + 150:  # segunda barra
+            cv.rectangle(frame, (170-10, 440), (170+10, 480), (0, 255, 0), -1)
+        if contador < (540+150): # terceira barra
+            cv.rectangle(frame, (270-10, 440), (270+10, 480), (0, 255, 0), -1)
+        if contador < (720+150): # quarta barra
+            cv.rectangle(frame, (370-10, 440), (370+10, 480), (0, 255, 0), -1)
+        if contador < (900+150): # quinta barra
+            cv.rectangle(frame, (470-10, 440), (470+10, 480), (0, 255, 0), -1)
+        contador += 1
         cv.imshow('frame', frame)
+        if cv.waitKey(1) == ord('q'):
+            break
     cap.release()
     out.release()
     cv.destroyAllWindows()
@@ -194,6 +211,14 @@ def calcular_fc(raw_ppg):
 
     indice_max = np.argmax(amplitude)
     freq_max = frequencia[indice_max]
+
+    plt.figure()
+    plt.title("sinal bruto de amplitude no tempo")
+    plt.ylabel("Amplitude")
+    plt.xlabel("Time [s]")
+    plt.plot(t, raw_ppg)
+    plt.savefig('sinal_bruto_no_Tempo.png')
+    plt.show()
 
     plt.figure()
     plt.title("sinal filtrado de amplitude no tempo")
