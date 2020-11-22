@@ -48,7 +48,7 @@ def main(caminho=None):  # variavel vazia
         if roi_testa is not None:  # se encontrou a região da testa
             media_matiz = calcular_media_matiz(roi_testa)
             raw_ppg = np.append(raw_ppg, media_matiz)
-        cv.imshow('Video', frame)  # mostra a imagem capturada na janela 
+        cv.imshow('Video', frame)  # mostra a imagem capturada na janela
 
         # o trecho seguinte e apenas para parar o codigo e fechar a janela
         if cv.waitKey(1) & 0xFF == ord('q'):
@@ -62,8 +62,8 @@ def main(caminho=None):  # variavel vazia
 def detecta_face(frame):
     """Detecta a face no quadro."""
     gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-    face_cascade_name = 'haarcascade_frontalface_default.xml'
-    face_cascade = cv.CascadeClassifier(face_cascade_name)  # classificador para face
+    face_cascade_name = 'haarcascade_frontalface_default.xml'  # classificador
+    face_cascade = cv.CascadeClassifier(face_cascade_name)     # para a face
     faces = face_cascade.detectMultiScale(gray, minNeighbors=20,
                                           minSize=(30, 30),
                                           maxSize=(300, 300))
@@ -80,8 +80,8 @@ def detecta_face(frame):
 
 def detecta_olho(roi_gray, roi_color):
     """Detecta o olho no quadro."""
-    eye_cascade_name = 'haarcascade_eye.xml'
-    eye_cascade = cv.CascadeClassifier(eye_cascade_name)  # classificador para os olhos
+    eye_cascade_name = 'haarcascade_eye.xml'              # classificador
+    eye_cascade = cv.CascadeClassifier(eye_cascade_name)  # para os olhos
     olhos = eye_cascade.detectMultiScale(roi_gray, minNeighbors=20,
                                          minSize=(10, 10), maxSize=(90, 90))
     contador = 0  # conta a quantidade de olhos encontrados na face
@@ -144,9 +144,9 @@ def gravar_video(nome):
     # Define the codec and create VideoWriter object
     fourcc = cv.VideoWriter_fourcc(*'XVID')
     arquivo = "testevideo_" + nome + ".avi"
-    out = cv.VideoWriter(arquivo, fourcc, 30.0, (640, 480)) #30fps
+    out = cv.VideoWriter(arquivo, fourcc, 30.0, (640, 480))  # 30fps
     contador = 0  # contador do numero de quadros
-    for __ in range(900+150): #900 (duracao do video)+150 (5 segundos)
+    for __ in range(900+150):  # 900 (duracao do video)+150 (5 segundos)
         ret, frame = cap.read()
         if not ret:
             print("Can't receive frame (stream end?). Exiting ...")
@@ -160,11 +160,11 @@ def gravar_video(nome):
             cv.rectangle(frame, (70-10, 440), (70+10, 480), (0, 255, 0), -1)
         if contador < (180*2) + 150:  # segunda barra
             cv.rectangle(frame, (170-10, 440), (170+10, 480), (0, 255, 0), -1)
-        if contador < (540+150): # terceira barra
+        if contador < (540+150):  # terceira barra
             cv.rectangle(frame, (270-10, 440), (270+10, 480), (0, 255, 0), -1)
-        if contador < (720+150): # quarta barra
+        if contador < (720+150):  # quarta barra
             cv.rectangle(frame, (370-10, 440), (370+10, 480), (0, 255, 0), -1)
-        if contador < (900+150): # quinta barra
+        if contador < (900+150):  # quinta barra
             cv.rectangle(frame, (470-10, 440), (470+10, 480), (0, 255, 0), -1)
         contador += 1
         cv.imshow('frame', frame)
@@ -178,36 +178,32 @@ def gravar_video(nome):
 def calcular_media_matiz(roi_testa):
     """Calcula a média de matiz da região da testa."""
     hsv = cv.cvtColor(roi_testa, cv.COLOR_BGR2HSV)  # Converte BGR em HSV
-    vetor_matiz = np.empty([0])
-    for linha in range(0, hsv.shape[0]):  # percorre linha do frame
-        for coluna in range(0, hsv.shape[1]):  # percorre coluna do frame
-            if hsv[linha, coluna, 0] < 18:  # def. do limite da matiz = 18
-                vetor_matiz = np.append(vetor_matiz, hsv[linha, coluna, 0])
-    media_matiz = np.mean(vetor_matiz)
+    media_matiz = np.average(hsv[:, :, 0], weights=(hsv[:, :, 0]) < 18)
     return media_matiz
 
 
 def calcular_fc(raw_ppg):
+    """Calcula a frequência cardíaca a partir do sinal PPG bruto."""
     # calcula frequencia cardiaca- IIR BAND PASS BUTHERWORTH
-    T = 1/20 # periodo
-    fs = 1/T # frequencia de amostragem
-    nyq = 0.5 * fs # Nysquist
-    freq_a = 0.8 / nyq # corte de limite inferior para filtro passa-alto
-    freq_b = 2.2 / nyq # corte de limite superior para filtro passa-baixo
+    T = 1/30  # periodo
+    fs = 1/T  # frequencia de amostragem
+    nyq = 0.5 * fs  # Nysquist
+    freq_a = 0.8 / nyq  # corte de limite inferior para filtro passa-faixa
+    freq_b = 2.2 / nyq  # corte de limite superior para filtro passa-faixa
 
-    b, a = butter(2, (freq_a, freq_b), btype='bandpass') # filtro de ordem 2
-    ppg_filtrado = filtfilt(b, a, raw_ppg)
+    b, a = butter(2, (freq_a, freq_b), btype='bandpass')  # filtro de ordem 2
+    ppg_filtrado = filtfilt(b, a, raw_ppg)  # obtem o sinal filtrado
 
-    #calculo fft do sinal filtrado
+    # calculo fft do sinal filtrado
     N = ppg_filtrado.size
-    t = np.linspace(0, N * T, N) # (base de tempo, valor inicial- final, numero de pontos)
+    t = np.linspace(0, N * T, N)
 
-    fft = np.fft.fft(ppg_filtrado) 
+    fft = np.fft.fft(ppg_filtrado)
 
     # fornece os componentes de frequência correspondentes aos dados
     freq = np.fft.fftfreq(len(ppg_filtrado), T)
     frequencia = freq[:N // 2]
-    amplitude = np.abs(fft)[:N // 2] * 1 / N # normalizando
+    amplitude = np.abs(fft)[:N // 2] * 1 / N  # normalizando
 
     indice_max = np.argmax(amplitude)
     freq_max = frequencia[indice_max]
