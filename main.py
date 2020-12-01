@@ -127,7 +127,7 @@ def detecta_olho(roi_gray, roi_color):
             eye_x = width - (eye_x + eye_wd)
         eyes_wd = width - 2*eye_x
 
-    if contador == 0:  # nenhum olho encontrado no quadro
+    if contador == 0 or len(olhos) > 2:  # nenhum olho encontrado no quadro
         roi_testa = None
     else:
         testa_x = eye_x + int(0.5*eye_wd)
@@ -183,7 +183,10 @@ def gravar_video(nome):
 def calcular_media_matiz(roi_testa):
     """Calcula a média de matiz da região da testa."""
     hsv = cv.cvtColor(roi_testa, cv.COLOR_BGR2HSV)  # Converte BGR em HSV
-    media_matiz = np.average(hsv[:, :, 0], weights=(hsv[:, :, 0]) < 18)
+    try:
+        media_matiz = np.average(hsv[:, :, 0], weights=(hsv[:, :, 0]) < 18)
+    except ZeroDivisionError:
+        media_matiz = 0
     return media_matiz
 
 
