@@ -35,7 +35,10 @@ def main(caminho=None):  # variavel vazia
     except NameError:
         print("Erro na leitura, você checou se é um arquivo de vídeo?")
         sys.exit()
-    raw_ppg = np.empty([0])  # armazena os dados brutos de pletismografia
+    n_frames = int(cap.get(cv.CAP_PROP_FRAME_COUNT))  # numero total de quadros
+    fps = cap.get(cv.CAP_PROP_FPS)  # numero de quadros por segundo do vídeo
+    raw_ppg = np.zeros([n_frames])  # ppg bruto
+    i_frame = 0  # contador para os quadros
     while True:
         frame = cap.read()[1]  # ler o quadro da imagem do vídeo
         if frame is None:  # fim do vídeo
@@ -46,8 +49,8 @@ def main(caminho=None):  # variavel vazia
         else:
             roi_testa = None
         if roi_testa is not None:  # se encontrou a região da testa
-            media_matiz = calcular_media_matiz(roi_testa)
-            raw_ppg = np.append(raw_ppg, media_matiz)
+            raw_ppg[i_frame] = calcular_media_matiz(roi_testa)
+            i_frame += 1
         cv.imshow('Video', frame)  # mostra a imagem capturada na janela
 
         # o trecho seguinte e apenas para parar o codigo e fechar a janela
@@ -55,7 +58,9 @@ def main(caminho=None):  # variavel vazia
             break
     cap.release()
     cv.destroyAllWindows()
-    calcular_fc(raw_ppg)
+    raw_ppg = raw_ppg[:i_frame]
+    fs_real = len(raw_ppg) / fps
+    calcular_fc(raw_ppg, fs_real)
     print("Done!")
 
 
@@ -182,12 +187,11 @@ def calcular_media_matiz(roi_testa):
     return media_matiz
 
 
-def calcular_fc(raw_ppg):
+def calcular_fc(raw_ppg, fs):
     """Calcula a frequência cardíaca a partir do sinal PPG bruto."""
     # calcula frequencia cardiaca- IIR BAND PASS BUTHERWORTH
-    T = 1/30  # periodo
-    fs = 1/T  # frequencia de amostragem
-    nyq = 0.5 * fs  # Nysquist
+    T = 1/fs  # periodo de amostragem
+    nyq = 0.5 * fs  # frequência de Nyquist
     freq_a = 0.8 / nyq  # corte de limite inferior para filtro passa-faixa
     freq_b = 2.2 / nyq  # corte de limite superior para filtro passa-faixa
 
@@ -229,7 +233,7 @@ def calcular_fc(raw_ppg):
     plt.ylabel("Amplitude")
     plt.xlabel("Frequência (Hz)")
     plt.plot(frequencia, amplitude)
-    print(f" frequencia cardiaca : {freq_max*60}")
+    print(f"Frequência cardíaca: {freq_max*60}")
     plt.savefig('ppg_filtrado_fft.png')
     plt.show()
 
