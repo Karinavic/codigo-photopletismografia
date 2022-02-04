@@ -16,6 +16,10 @@ import cv2 as cv
 import easygui
 from scipy.signal import butter, filtfilt
 import matplotlib.pyplot as plt
+import heartpy as hp
+from heartpy.datautils import rolling_mean, _sliding_window
+
+
 
 
 def main(caminho=None):  # variavel vazia
@@ -201,6 +205,10 @@ def calcular_fc(raw_ppg, fs):
     b, a = butter(2, (freq_a, freq_b), btype='bandpass')  # filtro de ordem 2
     ppg_filtrado = filtfilt(b, a, raw_ppg)  # obtem o sinal filtrado
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> adição-de-marcadores
     # calculo fft do sinal filtrado
     N = ppg_filtrado.size
     t = np.linspace(0, N * T, N)
@@ -215,12 +223,22 @@ def calcular_fc(raw_ppg, fs):
     indice_max = np.argmax(amplitude)
     freq_max = frequencia[indice_max]
 
+    #RMSSD 
+    #ppg_filtrado, timer = hp.load_exampledata(0)
+    wd, m = hp.process(ppg_filtrado, sample_rate = fs)
+    wd['peaklist'] #mostra a lista de picos 
+    figura = hp.plotter(wd, m, show=False, title='Picos do sinal FPG')
+    figura.savefig("picos.png", dpi=600)
+    for measure in m.keys():
+        print('%s: %f' %(measure, m[measure]))
+    
+
     plt.figure()
     plt.title("sinal bruto de amplitude no tempo")
     plt.ylabel("Amplitude")
     plt.xlabel("Time [s]")
     plt.plot(t, raw_ppg)
-    plt.savefig('sinal_bruto_no_Tempo.png')
+    plt.savefig('sinal_bruto_no_Tempo.png', dpi=600)
     plt.show()
 
     plt.figure()
@@ -228,7 +246,7 @@ def calcular_fc(raw_ppg, fs):
     plt.ylabel("Amplitude")
     plt.xlabel("Time [s]")
     plt.plot(t, ppg_filtrado)
-    plt.savefig('ppg_filtrado_Tempo.png')
+    plt.savefig('ppg_filtrado_Tempo.png', dpi=600)
     plt.show()
 
     plt.figure()
@@ -237,7 +255,11 @@ def calcular_fc(raw_ppg, fs):
     plt.xlabel("Frequência (Hz)")
     plt.plot(frequencia, amplitude)
     print(f"Frequência cardíaca: {freq_max*60}")
+<<<<<<< HEAD
     plt.savefig('ppg_filtrado_fft.png')
+=======
+    plt.savefig('ppg_filtrado_fft.png', dpi=600)
+>>>>>>> adição-de-marcadores
     plt.show()
 
 
