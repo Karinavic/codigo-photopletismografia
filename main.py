@@ -205,10 +205,6 @@ def calcular_fc(raw_ppg, fs):
     b, a = butter(2, (freq_a, freq_b), btype='bandpass')  # filtro de ordem 2
     ppg_filtrado = filtfilt(b, a, raw_ppg)  # obtem o sinal filtrado
 
-<<<<<<< HEAD
-=======
-
->>>>>>> adição-de-marcadores
     # calculo fft do sinal filtrado
     N = ppg_filtrado.size
     t = np.linspace(0, N * T, N)
@@ -255,11 +251,7 @@ def calcular_fc(raw_ppg, fs):
     plt.xlabel("Frequência (Hz)")
     plt.plot(frequencia, amplitude)
     print(f"Frequência cardíaca: {freq_max*60}")
-<<<<<<< HEAD
-    plt.savefig('ppg_filtrado_fft.png')
-=======
     plt.savefig('ppg_filtrado_fft.png', dpi=600)
->>>>>>> adição-de-marcadores
     plt.show()
 
 
