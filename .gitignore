@@ -51,7 +51,6 @@ coverage.xml
 *.xml
 figuras/
 videos/
-videos-ERROR/
 
 # Translations
 *.mo
