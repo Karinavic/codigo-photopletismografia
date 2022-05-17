@@ -50,6 +50,7 @@ coverage.xml
 *.avi
 *.xml
 figuras/
+videos/
 
 # Translations
 *.mo
