@@ -5,7 +5,7 @@ fonttools==4.33.3
 heartpy==1.2.7
 kiwisolver==1.4.2
 matplotlib==3.3.4
-numpy==1.21.6
+numpy==1.22.0
 opencv-contrib-python==4.5.5.64
 packaging==21.3
 Pillow==9.1.1
