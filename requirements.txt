@@ -1,4 +1,4 @@
-certifi==2021.10.8
+certifi==2022.12.7
 cycler==0.11.0
 easygui==0.98.3
 fonttools==4.33.3
